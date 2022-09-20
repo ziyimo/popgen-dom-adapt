@@ -1,0 +1,93 @@
+
+initialize() {
+
+	if (exists("slimgui")){
+		defineConstant("N", 10000);  // pop size
+
+		defineConstant("L", 1e5);    // total chromosome length
+		//defineConstant("G", 1e4);   // gene length
+		defineConstant("rho", 1.25e-8);
+		//defineConstant("mu", 1.25e-8);
+		
+		defineConstant("s_min", 1e-4);
+		defineConstant("s_max", 1e-2);
+		
+		defineConstant("mutgenbp_early", 10000);
+		defineConstant("mutgenbp_late", 100);
+		
+		defineConstant("outPref", "test");
+	}
+	
+	defineConstant("s", runif(1, s_min, s_max));
+	defineConstant("mutgenbp", rdunif(1, mutgenbp_late, mutgenbp_early));
+	defineConstant("last", 4*N);  // end gen
+	
+	//initializeTreeSeq();
+	initializeMutationRate(0);
+	initializeRecombinationRate(rho, L-1);
+	initializeMutationType("m1", 0.5, "f", s);
+	initializeMutationType("m2", 0.5, "f", 0);
+	
+	initializeGenomicElementType("g1", m2, 1.0);
+	initializeGenomicElement(g1, 0, L-1);
+	//initializeMutationType("m2", 0.25, "g", -0.03, 0.2);
+	//initializeGenomicElementType("g2", m2, 1.0);
+	//initializeGenomicElement(g2, asInteger(L/2-G/2), asInteger(L/2+G/2));
+}
+1 {
+	defineConstant("simID", getSeed());
+	sim.addSubpop("p1", N);
+	
+	sim.rescheduleScriptBlock(s1, last-mutgenbp-100, last-mutgenbp-100);
+	sim.rescheduleScriptBlock(s2, last-mutgenbp, last-mutgenbp);
+	sim.rescheduleScriptBlock(s3, last, last);
+}
+
+s1 2 late() {
+	sim.outputFull("/tmp/slim_" + simID + ".txt"); // modify this b4 deployment
+	//sim.treeSeqOutput("tmp/slim_" + simID + ".trees");
+}
+
+s2 3 late() {
+	target = sample(p1.genomes, 1);
+	target.addNewDrawnMutation(m1, asInteger(L/2));
+}
+
+1: late() {
+	if (sim.generation > last-mutgenbp & !exists("FIXED")){
+		if (sim.countOfMutationsOfType(m1) == 0){
+			fixed = (sum(sim.substitutions.mutationType == m1) == 1);
+			
+			if (fixed){
+				cat(simID + ": FIXED\n");
+				defineConstant("FIXED", T);
+				cat(c("%%", outPref, s, mutgenbp, 1, "\n"), sep="\t");
+				deleteFile("/tmp/slim_" + simID + ".txt");
+				sim.simulationFinished();
+			}
+			else{
+				cat(simID + ": LOST - RESTARTING\n");
+				
+				// go back to generation `mutgen-100`
+				sim.readFromPopulationFile("/tmp/slim_" + simID + ".txt");
+				//sim.readFromPopulationFile("tmp/slim_" + simID + ".trees");
+				
+				// start a newly seeded run
+				setSeed(rdunif(1, 0, asInteger(2^32) - 1));
+			}
+		}
+	}
+}
+
+s3 4 late() {
+	if (exists("FIXED")){
+		mut_freq = 1;
+	} else{
+		mut_freq = sim.mutationFrequencies(NULL, sim.mutationsOfType(m1));
+	}
+	cat(c("%%", outPref, s, mutgenbp, mut_freq, "\n"), sep="\t");
+	deleteFile("/tmp/slim_" + simID + ".txt");
+	//deleteFile("tmp/slim_" + simID + ".trees");
+	//sim.treeSeqOutput(paste(c(outPref, ".trees"), sep=""));
+	sim.simulationFinished();
+}
