@@ -5,9 +5,9 @@ initialize() {
 		defineConstant("N", 10000);  // pop size
 
 		defineConstant("L", 1e5);    // total chromosome length
-		//defineConstant("G", 1e4);   // gene length
+		defineConstant("G", 1e4);   // gene length
 		defineConstant("rho", 1.25e-8);
-		//defineConstant("mu", 1.25e-8);
+		defineConstant("mu", 1.25e-8);
 		
 		defineConstant("s_min", 2e-3);
 		defineConstant("s_max", 1e-2);
@@ -18,7 +18,7 @@ initialize() {
 		defineConstant("max_AF", 0.95);
 		defineConstant("max_reset", 500);
 		
-		defineConstant("outPref", "test");
+		defineConstant("outPref", "test2");
 	}
 	
 	defineConstant("s", runif(1, s_min, s_max));
@@ -33,13 +33,12 @@ initialize() {
 	defineGlobal("reset_attempt", 0);
 	
 	initializeTreeSeq();
-	initializeMutationRate(0);
+	initializeMutationRate(mu);
 	initializeRecombinationRate(rho, L-1);
 	initializeMutationType("m1", 0.5, "f", s);
-	initializeMutationType("m2", 0.5, "f", 0);
-	
-	initializeGenomicElementType("g1", m2, 1.0);
-	initializeGenomicElement(g1, 0, L-1);
+	initializeMutationType("m2", 0.25, "g", -0.03, 0.2);
+	initializeGenomicElementType("g2", m2, 1.0);
+	initializeGenomicElement(g2, asInteger(L/2-G/2), asInteger(L/2+G/2));
 }
 1 {
 	defineConstant("simID", getSeed());
