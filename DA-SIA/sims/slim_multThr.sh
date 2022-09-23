@@ -5,6 +5,7 @@
 #$ -o logs/$JOB_ID_$TASK_ID.o
 #$ -e logs/$JOB_ID_$TASK_ID.e
 #$ -l m_mem_free=2G
+#$ -l virtual_free=16G
 
 ## These should be passed in while submitting the job
 # -t 1-100
@@ -36,7 +37,7 @@ for sim in $(seq 1 $RUNS); do
     fi
     while :
     do
-		${SLIMDIR}/slim -s $(tr -cd "[:digit:]" < /dev/urandom | head -c 10) -t -m \
+		${SLIMDIR}/slim -s $(tr -cd "[:digit:]" < /dev/urandom | head -c 10) \
 		-d "N=10000" -d "L=1e5" -d "G=1e4" -d "rho=1.25e-8" -d "mu=1.25e-8" \
 		-d "min_AF=${minAF}" -d "max_AF=${maxAF}" -d "s_min=${minSC}" -d "s_max=${maxSC}" \
         -d "max_reset=${maxATTEMPTS}" -d "outPref='${OUTPREF}_${RUN_ID}_temp'" \
@@ -67,6 +68,7 @@ for sim in $(seq 1 $RUNS); do
     done
     # delete the intermediate tree file (takes up too much space)
     rm ${OUTPREF}_${RUN_ID}_temp.trees
+    rm ${JOB_ID}_${SGE_TASK_ID}.buf
 done
 
 echo "_END_$(date)"

@@ -4,7 +4,8 @@
 #$ -cwd
 #$ -o logs/$JOB_ID_$TASK_ID.o
 #$ -e logs/$JOB_ID_$TASK_ID.e
-#$ -l m_mem_free=5G
+#$ -l m_mem_free=2G
+#$ -l virtual_free=16G
 
 ## specify at submit time
 # -t 1-3

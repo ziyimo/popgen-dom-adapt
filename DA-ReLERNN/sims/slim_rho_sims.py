@@ -39,7 +39,7 @@ def main(args):
         mu = np.random.uniform(args.mu_min, args.mu_max)
         rho = np.random.uniform(0, args.rho_max)
 
-        slim_cmd = [f'{SLIM_PATH}/slim', '-t', '-m',
+        slim_cmd = [f'{SLIM_PATH}/slim', # '-t', '-m',
                     '-d', f'N={args.Ne}', '-d', f'L={int(args.L)}', '-d', f'G={int(args.G)}',
                     '-d', f'mu={mu}', '-d', f'rho={rho}',
                     '-d', f'outPref="{args.sim_tag}/{args.sim_tag}_{run_id}_temp"',
@@ -72,10 +72,10 @@ def main(args):
 
         assert sorted_GTM.shape == (args.N, S) and VP.shape[0] == S, "No. sites mismatch!"
 
-        # padding
+        # clipping (centered) and padding
         if S >= args.max_sites:
-            sorted_GTM = sorted_GTM[:, :args.max_sites]
-            VP = VP[:args.max_sites]
+            sorted_GTM = sorted_GTM[:, (S//2-args.max_sites//2):(S//2+args.max_sites//2)]
+            VP = VP[(S//2-args.max_sites//2):(S//2+args.max_sites//2)]
         else:
             sorted_GTM = np.pad(sorted_GTM, [(0, 0), (0, args.max_sites-S)])
             VP = np.pad(VP, (0, args.max_sites-S))
