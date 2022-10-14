@@ -1,0 +1,30 @@
+
+initialize() {
+
+	if (exists("slimgui")){
+		defineConstant("N", 10000);  // pop size
+
+		defineConstant("L", 1e5);    // total chromosome length
+		defineConstant("rho", 1.25e-8);
+		defineConstant("mu", 1.25e-8);
+
+		defineConstant("outPref", "test2");
+	}
+	
+	defineConstant("last", 4*N);  // end gen
+	
+	initializeTreeSeq();
+	initializeMutationRate(0);
+	initializeRecombinationRate(rho, L-1);
+	initializeMutationType("m2", 0.5, "f", 0);
+	initializeGenomicElementType("g1", m2, 1.0);
+	initializeGenomicElement(g1, 0, L-1);
+}
+1 {
+	sim.addSubpop("p1", N);
+	sim.rescheduleScriptBlock(s3, last, last);
+}
+
+s3 4 late() {
+	sim.treeSeqOutput(paste(c(outPref, ".trees"), sep=""));
+}
