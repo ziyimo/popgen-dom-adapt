@@ -14,8 +14,7 @@ from SIA_sc_GRL import *
 
 mod_path = sys.argv[1]
 dat_pref = sys.argv[2]
-Y_pref = sys.argv[3]
-out_pref = sys.argv[4]
+out_pref = sys.argv[3]
 
 if "DA" in mod_path:
     trained_mod = keras.models.load_model(mod_path,
@@ -23,13 +22,12 @@ if "DA" in mod_path:
 else:
     trained_mod = keras.models.load_model(mod_path)
 
-with np.load(f"{dat_pref}_sft_splitIdx.npz") as swpIdx:
-    test_X = np.load(f"{dat_pref}_sft_fea.npy", mmap_mode='r')[swpIdx["TEST"]]    
+with np.load(f"{dat_pref}_splitIdx.npz") as swpIdx:
+    test_X = np.load(f"{dat_pref}_fea.npy", mmap_mode='r')[swpIdx["TEST"]]    
     test_X = test_X*fea_scaling()
     test_X = np.moveaxis(test_X, 1, -1)
 
-    test_indices = np.load(f"{dat_pref}_sft_idx.npy")[swpIdx["TEST"]]
-    test_Y = np.load(f"{Y_pref}_sc.npy")[test_indices]
+    test_Y = np.load(f"{dat_pref}_meta.npy")[swpIdx["TEST"]][:, 1]
 
 Y_pred = trained_mod.predict(test_X, verbose=1)
 

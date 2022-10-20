@@ -7,6 +7,8 @@ from tensorflow.keras.layers import Conv2D, MaxPool2D # UpSampling2D, Conv2DTran
 from tensorflow.keras.optimizers import RMSprop, Adam
 from tensorflow.keras.utils import Sequence
 
+
+dropout_rate = 0.2
 # Just 3 stacked matrices for prototyping
 
 def fea_scaling(taxa_cnt = 128, max_gen = 1e5):
@@ -47,11 +49,11 @@ def create_convnet():
   h_class = Dense(1024, use_bias=False)(h_layer)
   h_class = BatchNormalization()(h_class)
   h_class = Activation('relu')(h_class)
-  #h_class = Dropout(dropout_rate)(h_class)
+  h_class = Dropout(dropout_rate)(h_class)
 
   # Dense layer #2
   h_class = Dense(512, activation="relu")(h_class)
-  #h_class = Dropout(dropout_rate)(h_class)
+  h_class = Dropout(dropout_rate)(h_class)
 
   # classification output
   out_class = Dense(1, activation='sigmoid')(h_class)

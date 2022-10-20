@@ -13,18 +13,19 @@ from tensorflow import keras # use tf.keras
 from SIA_GRL import *
 
 mod_path = sys.argv[1]
-dat_pref = sys.argv[2]
-out_pref = sys.argv[3]
+neu_pref = sys.argv[2]
+swp_pref = sys.argv[3]
+out_pref = sys.argv[4]
 
 if "DA" in mod_path:
     trained_mod = keras.models.load_model(mod_path, custom_objects={'custom_loss': custom_loss})
 else:
     trained_mod = keras.models.load_model(mod_path)
 
-with np.load(f"{dat_pref}_neu_splitIdx.npz") as neuIdx:
-    with np.load(f"{dat_pref}_sft_splitIdx.npz") as swpIdx:
-        test_X = np.concatenate((np.load(f"{dat_pref}_neu_fea.npy", mmap_mode='r')[neuIdx["TEST"]], 
-                       np.load(f"{dat_pref}_sft_fea.npy", mmap_mode='r')[swpIdx["TEST"]]))
+with np.load(f"{neu_pref}_splitIdx.npz") as neuIdx:
+    with np.load(f"{swp_pref}_splitIdx.npz") as swpIdx:
+        test_X = np.concatenate((np.load(f"{neu_pref}_fea.npy", mmap_mode='r')[neuIdx["TEST"]], 
+                       np.load(f"{swp_pref}_fea.npy", mmap_mode='r')[swpIdx["TEST"]]))
         
         test_X = test_X*fea_scaling()
         test_X = np.moveaxis(test_X, 1, -1)

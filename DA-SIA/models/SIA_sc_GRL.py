@@ -48,7 +48,9 @@ def custom_mse(y_true, y_pred):
   y_true = tf.boolean_mask(y_true, tf.not_equal(y_true, -1))
   return mean_squared_error(y_true, y_pred)
 
-def create_GRL_mod():
+def create_GRL_mod(bce_weight):
+
+  dropout_rate = 0.2
 
   input_dims = [127, 127, 3] # channel last, use np.moveaxis() to reformat data
   inputs = Input(shape=input_dims)
@@ -77,11 +79,11 @@ def create_GRL_mod():
   h_class = Dense(1024, use_bias=False)(h_layer)
   h_class = BatchNormalization()(h_class)
   h_class = Activation('relu')(h_class)
-  #h_class = Dropout(dropout_rate)(h_class)
+  h_class = Dropout(dropout_rate)(h_class)
 
   # Dense layer #2
   h_class = Dense(512, activation="relu")(h_class)
-  #h_class = Dropout(dropout_rate)(h_class)
+  h_class = Dropout(dropout_rate)(h_class)
 
   # classification output
   out_continuous = Dense(1, activation='linear', name='predictor')(h_class)
@@ -99,7 +101,7 @@ def create_GRL_mod():
   GRL_model = Model(inputs=inputs, outputs=[out_continuous, out_disc])
   GRL_model.compile(optimizer='adam',
                     loss=[custom_mse, custom_bce],
-                    loss_weights = [1, 1e-4], # equal weighing of two tasks
+                    loss_weights = [1, bce_weight], # equal weighing of two tasks
                     metrics={'predictor': ['mae', tf.keras.metrics.RootMeanSquaredError()], 'discriminator': 'accuracy'})
   ######
 

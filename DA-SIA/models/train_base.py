@@ -54,4 +54,4 @@ history = convnet_class.fit(srcDataGen,
   validation_data=(val_X, val_Y),
   callbacks=[erly_stp, md_ckpt], batch_size=batch_size, epochs=tot_epoch, verbose=2)
 
-np.save(f"{out_pref}_hist.npy", history)
+#np.save(f"{out_pref}_hist.npy", history)

@@ -68,4 +68,4 @@ history = DA_class.fit(DataGen,
   validation_data=(val_X, {"classifier":val_Y_class, "discriminator":val_Y_discr}),
   callbacks=[erly_stp, md_ckpt], batch_size=batch_size, epochs=tot_epoch, verbose=2)
 
-np.save(f"{out_pref}_hist.npy", history)
+#np.save(f"{out_pref}_hist.npy", history)

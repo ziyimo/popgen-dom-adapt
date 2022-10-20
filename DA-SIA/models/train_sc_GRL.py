@@ -18,8 +18,9 @@ tgt_swp = sys.argv[2]
 
 tot_epoch = int(sys.argv[3])
 batch_size = int(sys.argv[4])
+bce_wgt = float(sys.argv[5])
 
-out_pref = sys.argv[5]
+out_pref = sys.argv[6]
 
 # preparing training data generator
 
@@ -45,7 +46,7 @@ val_Y_discr = -1*np.ones(len(val_swp_idx))
 # initilize model
 mirrored_strategy = tf.distribute.MirroredStrategy()
 with mirrored_strategy.scope():
-    DA_class = create_GRL_mod()
+    DA_class = create_GRL_mod(bce_wgt)
 
 ## Callbacks ##
 erly_stp = keras.callbacks.EarlyStopping(monitor='val_predictor_loss', patience=20)
