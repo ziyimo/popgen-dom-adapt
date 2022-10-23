@@ -15,11 +15,12 @@ GITPATH="/grid/siepel/home_norepl/mo/dom_adapt/popgen-dom-adapt"
 
 echo "_START_$(date)"
 
-COND=$1 # ("reg" or "bkgd")
+COND="bkgd" # ("reg" or "bkgd")
+GENELEN=$1
 TAG=$2
 RUNS=$3
 
-${GITPATH}/DA-ReLERNN/sims/slim_rho_sims.py $COND $TAG $((SGE_TASK_ID-1)) $RUNS
+${GITPATH}/DA-ReLERNN/sims/slim_rho_sims.py --G $GENELEN $COND $TAG $((SGE_TASK_ID-1)) $RUNS
 echo "_EXITSTAT_$?"
 echo "_END_$(date)"
 exit

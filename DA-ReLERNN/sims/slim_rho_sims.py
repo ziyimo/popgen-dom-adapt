@@ -41,7 +41,7 @@ def main(args):
 
         slim_cmd = [f'{SLIM_PATH}/slim', # '-t', '-m',
                     '-d', f'N={args.Ne}', '-d', f'L={int(args.L)}', '-d', f'G={int(args.G)}',
-                    '-d', f'mu={mu}', '-d', f'rho={rho}',
+                    '-d', f'mu={mu}', '-d', f'rho={rho}', '-d', f'max_gen={args.gen}',
                     '-d', f'outPref="{args.sim_tag}/{args.sim_tag}_{run_id}_temp"',
                     f'{SCRIPT_PATH}/{args.mode}_rho.slim']
 
@@ -62,7 +62,26 @@ def main(args):
         print(f">> Max roots: {max(t.num_roots for t in ts.trees())}->{max(t.num_roots for t in ts_samp.trees())}")
         print(f">> Sample size: {ts.num_samples}/{ts.num_individuals} -> {ts_samp.num_samples}/{ts_samp.num_individuals}")
 
-        mts = msprime.sim_mutations(ts_samp, rate=mu, keep=False)
+        # check type m0 is not used:
+        mut_types = set([md['mutation_type']
+                        for mut in ts.mutations()
+                        for md in mut.metadata['mutation_list']])
+        print(f">> Keeping {ts_samp.num_mutations} existing mutations of type(s) {mut_types}.")
+        assert 0 not in mut_types
+
+        next_id = pyslim.next_slim_mutation_id(ts_samp)
+        if args.L != args.G:
+            gene_rtmp = msprime.RateMap(position=[0, args.L/2-args.G/2, args.L/2+args.G/2-1, args.L], rate=[0, mu, 0])
+            mts = msprime.sim_mutations(ts_samp, rate=gene_rtmp, keep=True, start_time=args.gen*args.Ne,
+                                        model=msprime.SLiMMutationModel(type=0, next_id=next_id))
+
+            flank_rtmp = msprime.RateMap(position=[0, args.L/2-args.G/2-1, args.L/2+args.G/2, args.L], rate=[mu, 0, mu])
+            mts = msprime.sim_mutations(mts, rate=flank_rtmp, keep=True)
+        else:
+            mts = msprime.sim_mutations(ts_samp, rate=mu, keep=True, start_time=args.gen*args.Ne,
+                                        model=msprime.SLiMMutationModel(type=0, next_id=next_id))
+
+        # print(f">>> Neutral expectation: S={msprime.sim_mutations(ts_samp, rate=mu, keep=False).num_sites}") # sanity check
         S = mts.num_sites
         theta_W = S/H(args.N-1)
 
@@ -99,6 +118,7 @@ if __name__ == '__main__':
     parser.add_argument('--L', type=float, help='chromosome length', default=3e5)
     parser.add_argument('--G', type=float, help='gene length', default=1e4)
     parser.add_argument('--N', type=int, help='number of samples', default=32)
+    parser.add_argument('--gen', type=int, help='generations to simulate in SLiM (in units of N)', default=4)
     parser.add_argument('--max_sites', type=int, help='max. # of sites to keep', default=800)
 
     parser.add_argument('--last_idx', type=int, help='index of the last pre-existing simulations', default=0)

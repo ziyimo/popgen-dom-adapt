@@ -115,7 +115,11 @@ class XYseq(Sequence):
     self.tgt_neu = np.load(tgt_neu_file).astype(np.int32)
     self.tgt_swp = np.load(tgt_swp_file).astype(np.int32)
 
-    if tgt_swp_prop != 0.5:
+    if tgt_swp_prop == 0:
+      tgt_swp_trnidx = np.array([], dtype=int)
+    elif tgt_swp_prop == 1:
+      tgt_neu_trnidx = np.array([], dtype=int)
+    elif tgt_swp_prop != 0.5:
       if tgt_swp_prop > 0.5:
         neu_sz = int(225000/tgt_swp_prop*(1-tgt_swp_prop))
         tgt_neu_trnidx = np.random.choice(tgt_neu_trnidx, size=neu_sz, replace=False)
