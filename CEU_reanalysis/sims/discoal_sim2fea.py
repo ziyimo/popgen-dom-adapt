@@ -182,9 +182,14 @@ def main(args):
             print(f"SIM:{samp}, ATTEMPT:{loop_cnt}", flush=True)
             with open(temp_discoalF, "w") as outF:
                 discoal_proc = subprocess.run(discoal_cmd, stdout=outF)
-            if discoal_proc.returncode == 0: break
-
-        SC, SAF, CAF, onset_gen, foc_var_pos, no_sites, fea = discoal2fea(temp_discoalF, mode, c_low, c_high, no_chrs, soft)
+            if discoal_proc.returncode == 0:
+                try:
+                    SC, SAF, CAF, onset_gen, foc_var_pos, no_sites, fea = discoal2fea(temp_discoalF, mode, c_low, c_high, no_chrs, soft)
+                except AttributeError as err:
+                    print("[Polytomy at root] AttributeError: ", err)
+                    continue
+                else:
+                    break
         
         if mode == 'neu':
             SC_arr[samp] = SC
