@@ -31,7 +31,7 @@ ${RELATE_PATH}/bin/Relate \
 	-o ${WIN}
 RELATE_EXIT=$?
 
-if [$RELATE_EXIT -ne 0]; then
+if [ $RELATE_EXIT -ne 0 ]; then
     echo "${WIN}_RELATE_EXITSTAT_${RELATE_EXIT}_END_$(date)"
     exit
 fi
@@ -45,7 +45,7 @@ ${RELATE_PATH}/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
             -o ${WIN}_popsize
 POPSIZE_EXITSTAT=$?
 
-if [$POPSIZE_EXITSTAT -ne 0]; then
+if [ $POPSIZE_EXITSTAT -ne 0 ]; then
     echo "${WIN}_POPSIZE_EXITSTAT_${POPSIZE_EXITSTAT}_END_$(date)"
     exit
 fi
@@ -61,7 +61,7 @@ ${RELATE_PATH}/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
             -o ${WIN}_wg
 WG_EXITSTAT=$?
 
-if [$WG_EXITSTAT -ne 0]; then
+if [ $WG_EXITSTAT -ne 0 ]; then
     echo "${WIN}_WG_EXITSTAT_${WG_EXITSTAT}_END_$(date)"
     exit
 fi
@@ -72,7 +72,7 @@ ${RELATE_PATH}/bin/RelateFileFormats \
 	-o ${WIN}_wg
 TS_CONVERSION_EXITSTAT=$?
 
-if [$TS_CONVERSION_EXITSTAT -ne 0]; then
+if [ $TS_CONVERSION_EXITSTAT -ne 0 ]; then
     echo "${WIN}_TS_CONVERSION_EXITSTAT_${TS_CONVERSION_EXITSTAT}_END_$(date)"
     exit
 fi
