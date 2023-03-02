@@ -1,15 +1,14 @@
 import numpy as np
-
 import tensorflow as tf
-from tensorflow import keras # use tf.keras
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Layer, Input, Flatten, Activation, Dropout, Dense, Reshape, BatchNormalization
-from tensorflow.keras.layers import Conv2D, MaxPool2D # UpSampling2D, Conv2DTranspose
-from tensorflow.keras.optimizers import RMSprop, Adam
-from tensorflow.keras.utils import Sequence
+from tensorflow import keras  # use tf.keras
+from tensorflow.keras.layers import (  # UpSampling2D, Conv2DTranspose
+    Activation, BatchNormalization, Conv2D, Dense, Dropout, Flatten, Input,
+    Layer, MaxPool2D, Reshape)
 from tensorflow.keras.losses import binary_crossentropy
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam, RMSprop
+from tensorflow.keras.utils import Sequence
 
-# Just 3 stacked matrices for prototyping
 
 def fea_scaling(taxa_cnt = 128, max_gen = 1e5):
   scale_mtx = np.empty((3, taxa_cnt-1, taxa_cnt-1))

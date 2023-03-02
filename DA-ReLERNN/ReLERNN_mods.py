@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 import gc
+
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras # use tf.keras
+from tensorflow import keras  # use tf.keras
+from tensorflow.keras.layers import (GRU, LSTM, Activation, BatchNormalization,
+                                     Bidirectional, Dense, Dropout, Flatten,
+                                     Input, Layer, concatenate)
+from tensorflow.keras.losses import binary_crossentropy, mean_squared_error
 from tensorflow.keras.models import Model
 from tensorflow.keras.utils import Sequence
-from tensorflow.keras.layers import Layer, Input, Dense, Dropout, Flatten, concatenate, BatchNormalization, Activation
-from tensorflow.keras.layers import Bidirectional, GRU, LSTM
-from tensorflow.keras.losses import binary_crossentropy, mean_squared_error
 
 # MACROS
 rho_max = 6.25e-8
@@ -16,64 +18,6 @@ sim_len = 3e5
 no_sites = 800
 no_samps = 32
 
-class GTimgSequence(Sequence):
-  def __init__(self, train_path, batch_size):
-    with np.load(train_path) as train_npz:    
-      self.bgtm = train_npz["gtm"]
-      self.pos = train_npz["pos"]/sim_len # scale position
-      self.rho = train_npz["meta"][:, 1]/rho_max # scale rho to [0, 1]
-
-    self.batch_size = batch_size
-    self.dsize = self.bgtm.shape[0]
-    assert self.pos.shape == (self.dsize, no_sites) and self.rho.shape[0] == self.dsize, "Check data dimensions!"
-
-    self.no_batch = int(np.floor(self.dsize / self.batch_size)) # model sees training sample at most once per epoch
-    self.indices = np.arange(self.dsize)
-    np.random.shuffle(self.indices)
-
-  def __len__(self):
-    return self.no_batch
-
-  def __getitem__(self, idx):
-    batch_idx = self.indices[idx*self.batch_size:(idx+1)*self.batch_size]
-    batch_gtm = np.unpackbits(self.bgtm[batch_idx], axis=2)
-    batch_gtm = np.transpose(batch_gtm, axes=(0, 2, 1)) # Transposition for RNN
-
-    return (batch_gtm, self.pos[batch_idx]), self.rho[batch_idx]
-
-  def on_epoch_end(self):
-    np.random.shuffle(self.indices)
-    gc.collect()
-
-def ReLERNN_base():
-
-  gt_inputs = Input(shape=(no_sites, no_samps))
-  model = Bidirectional(LSTM(256,return_sequences=True))(gt_inputs)
-  model = Bidirectional(LSTM(128,return_sequences=False))(model)
-  model = Dense(256, use_bias=False)(model)
-  model = BatchNormalization()(model)
-  model = Activation("relu")(model)
-  #model = Dropout(0.35)(model)
-
-  #----------------------------------------------------
-
-  position_inputs = Input(shape=(no_sites,))
-  m2 = Dense(256, activation='relu')(position_inputs)
-
-  #----------------------------------------------------
-
-  model = concatenate([model,m2])
-  model = Dense(256, use_bias=False)(model)
-  model = BatchNormalization()(model)
-  model = Activation("relu")(model)
-  #model = Dropout(0.35)(model)
-  model = Dense(64, activation='relu')(model)
-  out = Dense(1, activation='relu')(model)
-
-  merged_model = Model(inputs=[gt_inputs, position_inputs], outputs=out)
-  merged_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-
-  return merged_model
 
 class GTmaskedSequence(Sequence):
   def __init__(self, src_path, tar_path, batch_size):
