@@ -59,7 +59,7 @@ def main(args):
 
     np.save(outPref+"_fea", fea_df)
     np.save(outPref+"_gt", samp_gt)
-    np.save(outPref+"_pos", np.vstack((chrom*np.ones(no_samps, dtype=int), samp_pos)))
+    np.save(outPref+"_pos", np.hstack((chrom*np.ones(no_samps, dtype=int), samp_pos)))
 
     print("#chrom\ttaxa\ttrees\tsites\tpassed_sites\tsampled_sites")
     print(f"##{chrom}\t{no_taxa}\t{no_trs}\t{no_sites}\t{pass_sites}\t{no_samps}", flush=True)

@@ -54,9 +54,9 @@ val_Y_class = np.concatenate((np.zeros(len(val_neu_idx)), np.ones(len(val_swp_id
 val_Y_discr = -1*np.ones(len(val_neu_idx)+len(val_swp_idx))
 
 # initilize model
-mirrored_strategy = tf.distribute.MirroredStrategy()
-with mirrored_strategy.scope():
-    DA_class = create_GRL_mod()
+# mirrored_strategy = tf.distribute.MirroredStrategy()
+# with mirrored_strategy.scope():
+DA_class = create_GRL_mod()
 
 ## Callbacks ##
 erly_stp = keras.callbacks.EarlyStopping(monitor='val_classifier_loss', patience=20)
