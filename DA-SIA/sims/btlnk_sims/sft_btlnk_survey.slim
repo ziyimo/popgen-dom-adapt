@@ -1,0 +1,115 @@
+// soft sweep sims
+
+initialize() {
+	
+	if (exists("slimgui")){
+		// need to define the following Eidos constants
+		defineConstant("pref", "test0614aft");
+	}
+	
+	params = readFile(paste0(pref, "_init.param"));
+	defineConstant("simlen", asInteger(params[0]));
+	defineConstant("selcoef", asFloat(params[1])); // scaled s
+	defineConstant("last", asInteger(params[2])); // equivalent to scaled mutgen
+	cat(c("AF_init:", params[3], "\n"));
+	defineConstant("Tstart", asInteger(params[4]));
+	defineConstant("Tend", asInteger(params[5]));
+	defineConstant("Nbotlnk", asInteger(params[6]));
+	
+	//defineGlobal("AF_traj", float(last)); // vector storing AF trajectory
+	
+	initializeTreeSeq();
+	initializeMutationRate(0); // use tree-seq recording
+	
+	initializeMutationType("m0", 0.5, "f", 0.0); // use "m0" for beneficial, initially neutral
+	initializeMutationType("m1", 0.5, "f", 0.0);
+	
+	// g1 genomic element type: uses m1 for all mutations
+	initializeGenomicElementType("g1", m1, 1.0);
+	
+	// uniform chromosome of length 100 kb with uniform recombination
+	initializeGenomicElement(g1, 0, simlen-1);
+	initializeRecombinationRate(0); // for surveying purposes
+	//initializeRecombinationRate(1e-8*scale);
+}
+
+1 early() {
+	defineConstant("simID", getSeed());
+	
+	community.rescheduleScriptBlock(s3, 2, last);
+	community.rescheduleScriptBlock(s4, last, last);
+
+	if (last < Tend){
+		community.deregisterScriptBlock(s1);
+		community.deregisterScriptBlock(s2);
+	} else{
+		community.rescheduleScriptBlock(s2, last-Tend, last-Tend);
+		if (last > Tstart){
+			community.rescheduleScriptBlock(s1, last-Tstart, last-Tstart);
+		} else{
+			community.deregisterScriptBlock(s1);
+		}
+	}
+}
+
+1 late() {
+	sim.readFromPopulationFile(paste0(pref, "_init.trees"));
+	
+	mut = sim.mutationsOfType(m0);
+	drift_freq = sim.mutationFrequencies(NULL, mut);
+	
+	defineGlobal("Finit", drift_freq);
+	defineGlobal("driftgen", mut.originTick);
+	cat(c("F_init:", Finit, "; drift_gen:", driftgen, "\n")); // debug
+	
+	mut.setSelectionCoeff(selcoef); // Convert to beneficial	
+}
+
+s1 2 early() {
+	p0.setSubpopulationSize(Nbotlnk);
+}
+
+s2 3 early() {
+	p0.setSubpopulationSize(10000);
+}
+
+s3 4 late() {
+	if (sim.countOfMutationsOfType(m0) == 0){
+		fixed = (sum(sim.substitutions.mutationType == m0) == 1);
+		
+		if (fixed){
+			cat(simID + ": FIXED\n");
+			cat(c("%%", selcoef, driftgen, last, Finit, 1, "\n"), sep='\t');
+			sim.simulationFinished();
+		}
+		else{
+			cat(simID + ": LOST - RESTARTING\n");
+			sim.readFromPopulationFile(paste0(pref, "_init.trees"));
+			// start a newly seeded run
+			setSeed(rdunif(1, 0, asInteger(2^32) - 1));
+			
+			mut = sim.mutationsOfType(m0);
+			mut.setSelectionCoeff(selcoef);
+		}
+	
+	} else{
+		if (sim.mutationFrequencies(p0, sim.mutationsOfType(m0)) > 0.999){
+			cat(simID + ": FIXED\n"); // consider fixed
+			cat(c("%%", selcoef, driftgen, last, Finit, 1, "\n"), sep='\t');
+			sim.simulationFinished();
+		}
+	}
+
+	//	else{
+	//		AF_traj[sim.generation-1] = sim.mutationFrequencies(p2, sim.mutationsOfType(m2));
+	//	}
+}
+
+s4 5 late() {
+	mut_freq = sim.mutationFrequencies(p0, sim.mutationsOfType(m0));
+	
+	//sim.treeSeqOutput(paste0(c(outPref, ".trees")));
+	cat(c("%%", selcoef, driftgen, last, Finit, mut_freq, "\n"), sep='\t'); // make sure the treeseq file is saved before printing meta-data
+	//writeFile(paste0(c(outPref, ".af")), paste(AF_traj, sep='\n'));
+	sim.simulationFinished();
+}
