@@ -25,7 +25,7 @@ RUNS=$2 # no of new runs PER THREAD
 OUTPREF="tmp/sft_Nb${NBTLNK}_${SGE_TASK_ID}"
 
 for sim in $(seq 1 $RUNS); do
-    ${GITDIR}/sft_init.py 0.001 0.02 50 8000 $NBTLNK $OUTPREF
+    ${GITDIR}/sft_init.py 0.001 0.02 -1 -1 $NBTLNK $OUTPREF
     INIT_RTCD=$?
     echo "_init_EXITSTAT_${INIT_RTCD}"
     ${SLIMDIR}/slim -s $(tr -cd "[:digit:]" < /dev/urandom | head -c 10) -t -m \

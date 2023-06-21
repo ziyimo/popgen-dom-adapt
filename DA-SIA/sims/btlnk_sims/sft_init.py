@@ -13,9 +13,12 @@ helpMsg = '''
 '''
 
 scale = 1
-sim_len = 5e3 # can be shortened for surveys
-rho = 1e-8*scale
+sim_len = 1e5 # can be shortened for surveys
+rho = 1.25e-8*scale
 Ne = 10000
+
+def log_log_lin(sc_vec, k, b):
+    return 10**b*np.power(sc_vec, -k)
 
 def main(args):
     if len(args) != 7:    # 6 arguments
@@ -25,9 +28,6 @@ def main(args):
     sc_max = float(args[2])
     rec = int(args[3])
     anc = int(args[4])
-    if rec == -1 and anc == -1: # TBD
-        rec = (10**0.7)*(SC**(-1))
-        anc = (10**1.3)*(SC**(-1))
 
     t_end = 1000 # bottleneck end time
     t_start = 2000 # bottleneck start time
@@ -35,17 +35,22 @@ def main(args):
 
     pref = args[6]
 
-    logunif = bool(np.random.randint(2))
-    if logunif:
+    logunif = np.random.uniform()
+    if logunif < 0.1: # << tune proportion here
         SC = np.exp(np.random.uniform(np.log(sc_min*scale), np.log(sc_max*scale)))
     else:
         SC = np.random.uniform(sc_min*scale, sc_max*scale)
 
-    mutgen = t_end
+    if rec == -1 and anc == -1:
+        rec = log_log_lin(SC, 1, 0.5)
+        anc = np.minimum(log_log_lin(SC, 1, 1.1), 8000)
+        if N_btnk < 5000:
+            rec = np.minimum(rec, 1000)
 
-    while mutgen in [t_start, t_end]: # exclude edge cases
-        logunif = bool(np.random.randint(2))
-        if logunif:
+    mutgen = t_end
+    while mutgen in [t_start, t_start+1, t_end, t_end+1]: # exclude edge cases
+        logunif = np.random.uniform()
+        if logunif < 0: # << tune proportion here
             mutgen = int(np.exp(np.random.uniform(np.log(rec), np.log(anc))))
         else:
             mutgen = np.random.randint(rec, anc) # scaled generation of selection onset (before present)

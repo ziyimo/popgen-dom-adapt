@@ -1,0 +1,138 @@
+// soft sweep sims
+
+initialize() {
+	
+	if (exists("slimgui")){
+		// need to define the following Eidos constants
+		
+		defineConstant("pref", "test0620_strong");
+	}
+	
+	params = readFile(paste0(pref, "_init.param"));
+	defineConstant("simlen", asInteger(params[0]));
+	defineConstant("selcoef", asFloat(params[1])); // scaled s
+	defineConstant("last", asInteger(params[2])); // equivalent to scaled mutgen
+	cat(c("AF_init:", params[3], "\n"));
+	defineConstant("Tstart", asInteger(params[4]));
+	defineConstant("Tend", asInteger(params[5]));
+	defineConstant("Nbotlnk", asInteger(params[6]));
+	
+	//defineGlobal("AF_traj", float(last)); // vector storing AF trajectory
+	defineGlobal("reset_attempt", 0);
+	
+	initializeTreeSeq();
+	initializeMutationRate(0); // use tree-seq recording
+	
+	initializeMutationType("m0", 0.5, "f", 0.0); // use "m0" for beneficial, initially neutral
+	initializeMutationType("m1", 0.5, "f", 0.0);
+	
+	// g1 genomic element type: uses m1 for all mutations
+	initializeGenomicElementType("g1", m1, 1.0);
+	
+	// uniform chromosome of length 100 kb with uniform recombination
+	initializeGenomicElement(g1, 0, simlen-1);
+	initializeRecombinationRate(1.25e-8);
+}
+
+1 early() {
+	defineConstant("simID", getSeed());
+	
+	community.rescheduleScriptBlock(s3, 2, last);
+	community.rescheduleScriptBlock(s4, last, last);
+
+	if (last < Tend){
+		community.deregisterScriptBlock(s1);
+		community.deregisterScriptBlock(s2);
+	} else{
+		community.rescheduleScriptBlock(s2, last-Tend, last-Tend);
+		if (last > Tstart){
+			community.rescheduleScriptBlock(s1, last-Tstart, last-Tstart);
+		} else{
+			community.deregisterScriptBlock(s1);
+		}
+	}
+}
+
+1 late() {
+	
+	sim.readFromPopulationFile(paste0(pref, "_init.trees"));
+	
+	mut = sim.mutationsOfType(m0);
+	drift_freq = sim.mutationFrequencies(NULL, mut);
+	
+	defineGlobal("Finit", drift_freq);
+	defineGlobal("driftgen", mut.originTick);
+	cat(c("F_init:", Finit, "; drift_gen:", driftgen, "\n")); // debug
+	
+	mut.setSelectionCoeff(selcoef); // Convert to beneficial
+}
+
+s1 2 early() {
+	p0.setSubpopulationSize(Nbotlnk);
+}
+
+s2 3 early() {
+	p0.setSubpopulationSize(10000);
+}
+
+s3 4 late() {
+	if (sim.countOfMutationsOfType(m0) == 0){
+		fixed = (sum(sim.substitutions.mutationType == m0) == 1);
+		if (fixed){
+			cat(simID + ": FIXED - RESTARTING\n");
+		} else {
+			cat(simID + ": LOST - RESTARTING\n");
+		}
+		
+		if (reset_attempt == 500){ // maximum number of resets
+			cat(simID + ": MAX ATTEMPT REACHED - ABORTING\n");
+			cat(c("%%", -1, -1, -1, -1, -1, -1, "\n"), sep='\t');
+			//deleteFile("/tmp/slim_" + simID + ".trees");
+			sim.simulationFinished();
+		} else{
+		
+			sim.readFromPopulationFile(paste0(pref, "_init.trees"));
+			// start a newly seeded run
+			setSeed(rdunif(1, 0, asInteger(2^32) - 1));
+			
+			mut = sim.mutationsOfType(m0);
+			mut.setSelectionCoeff(selcoef);
+			
+			defineGlobal("reset_attempt", reset_attempt+1);
+		}
+	} 
+//	else{
+//		AF_traj[sim.generation-1] = sim.mutationFrequencies(p1, sim.mutationsOfType(m2));
+//	}
+}
+
+s4 5 late() {
+	mut_freq = sim.mutationFrequencies(p0, sim.mutationsOfType(m0));
+	
+	if (mut_freq < 0.25 | mut_freq > 0.95){ // << AF bounds
+		cat(simID + ": FREQ OOB - RESTARTING\n");
+		if (reset_attempt == 500){ // maximum number of resets
+			cat(simID + ": MAX ATTEMPT REACHED - ABORTING\n");
+			cat(c("%%", -1, -1, -1, -1, -1, -1, "\n"), sep='\t');
+			//deleteFile("/tmp/slim_" + simID + ".trees");
+			sim.simulationFinished();
+		} else{
+		
+			sim.readFromPopulationFile(paste0(pref, "_init.trees"));
+			// start a newly seeded run
+			setSeed(rdunif(1, 0, asInteger(2^32) - 1));
+			
+			mut = sim.mutationsOfType(m0);
+			mut.setSelectionCoeff(selcoef);
+			defineGlobal("reset_attempt", reset_attempt+1);
+			return;
+		}
+	} else{
+	
+		sim.treeSeqOutput(paste0(c(pref, "_slim.trees")));
+		cat(c("%%", selcoef, driftgen, last, Finit, mut_freq, pref, "\n"), sep='\t'); // make sure the treeseq file is saved before printing meta-data
+		//writeFile(paste0(c(pref, ".af")), paste(AF_traj, sep='\n'));
+		//deleteFile("/tmp/slim_" + simID + ".trees");
+		sim.simulationFinished();
+	}
+}
