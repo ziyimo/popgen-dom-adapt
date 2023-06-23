@@ -95,7 +95,7 @@ def main(args):
             ts_samp = tskit.load(sim_path)
             if ts_samp.num_sites > 1:
                 ts_samp = ts_samp.delete_sites(np.nonzero(ts_samp.tables.sites.position != 50000)[0])
-            ts_tru = msprime.mutate(ts_samp, rate=scaled_mu, keep=True) # deprecated
+            ts_tru = msprime.mutate(ts_samp, rate=scaled_mu, keep=True) # deprecated, but supported indefinitely
             # while True:
             #     try:
             #         ts_tru = msprime.sim_mutations(ts_samp, rate=scaled_mu, keep=True)

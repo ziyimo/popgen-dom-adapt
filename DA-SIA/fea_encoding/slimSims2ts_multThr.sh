@@ -4,7 +4,7 @@
 #$ -cwd
 #$ -o logs/$JOB_ID_$TASK_ID.o
 #$ -e logs/$JOB_ID_$TASK_ID.e
-#$ -l virtual_free=25G
+#$ -l m_mem_free=16G
 
 ## Specify with qsub
 # -t 1-50
@@ -12,7 +12,7 @@
 
 echo "_START_$(date)"
 
-# also remember to load R ``module load R/4.0.5-foss-2020a``
+# also remember to load R ``module load R/4.2.0-foss-2021b``
 
 SCRIPT_DIR="/grid/siepel/home_norepl/mo/dom_adapt/popgen-dom-adapt/DA-SIA/fea_encoding"
 
