@@ -45,8 +45,8 @@ def main(args):
         meta_sorted = np.load(metaF) # new npy format
         idx_ls = meta_sorted[:, 0]
         sc_ls = meta_sorted[:, 1]
-        onset_ls = meta_sorted[:, 2]
-        caf_ls = meta_sorted[:, 3]
+        onset_ls = meta_sorted[:, 3] # field may differ for sft and hd sweeps
+        caf_ls = meta_sorted[:, 5]
         no_sims = meta_sorted.shape[0]
 
     tasks = no_sims//tot_thr
@@ -78,19 +78,20 @@ def main(args):
         GTM = ts_eg.genotype_matrix()
         var_pos = get_site_ppos(ts_eg)
 
+        # new pipeline with predetermined neutral variant in the center
+        vOI_gt = GTM[var_pos==50000, :].flatten()
+        if np.sum(vOI_gt) == 0: # sweep site monomorphic, possibly due to Relate artifact
+            print(">>>", r_idx, "/", b_idx, ts_path, ": MONO", flush=True)
+            continue # discard simulation
+        vOI_pos = 50000
         if mode == 'n':
-            samp_idx = samp_var(GTM, var_pos)
-            vOI_gt = GTM[samp_idx, :].flatten()
-            vOI_pos = var_pos[samp_idx]
+            # samp_idx = samp_var(GTM, var_pos)
+            # vOI_gt = GTM[samp_idx, :].flatten()
+            # vOI_pos = var_pos[samp_idx]
             sc = 0
             onset = 0
             AF = np.mean(vOI_gt)
         elif mode == 's':
-            vOI_gt = GTM[var_pos==50000, :].flatten()
-            if np.sum(vOI_gt) == 0: # sweep site monomorphic, possibly due to Relate artifact
-                print(">>>", r_idx, "/", b_idx, ts_path, ": MONO", flush=True)
-                continue # discard simulation
-            vOI_pos = 50000
             sc = sc_ls[r_idx]
             onset = onset_ls[r_idx]
             AF = caf_ls[r_idx]
@@ -108,4 +109,3 @@ def main(args):
     return 0
 
 sys.exit(main(sys.argv))
-s
