@@ -20,7 +20,9 @@ tot_epoch = int(sys.argv[3])
 batch_size = int(sys.argv[4])
 bce_wgt = float(sys.argv[5])
 
-out_pref = sys.argv[6]
+tgt_size_prop = float(sys.argv[6])
+
+out_pref = sys.argv[7]
 
 # preparing training data generator
 
@@ -29,6 +31,11 @@ with np.load(f"{src_swp}_splitIdx.npz") as splitIdx:
 with np.load(f"{tgt_swp}_splitIdx.npz") as splitIdx:
     tgt_swp_idx = splitIdx["TRAIN"]
     val_swp_idx = splitIdx["VAL"]
+
+if tgt_size_prop < 1.0:
+    tgt_swp_idx = np.random.choice(tgt_swp_idx, int(len(tgt_swp_idx)*tgt_size_prop), replace=False)
+
+print(f"src size: {len(src_swp_idx)}\ntgt size: {len(tgt_swp_idx)}", flush=True)
 
 DataGen = XYseq(f"{src_swp}_fea.npy", f"{src_swp}_meta.npy", src_swp_idx,
                 f"{tgt_swp}_fea.npy", tgt_swp_idx,

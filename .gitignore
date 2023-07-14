@@ -82,3 +82,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# auxillary jupyter notebooks
+meta2npz.ipynb
+split_data.ipynb

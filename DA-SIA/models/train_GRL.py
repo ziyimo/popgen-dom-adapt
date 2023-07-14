@@ -19,7 +19,8 @@ src_swp = sys.argv[2]
 tgt_neu = sys.argv[3]
 tgt_swp = sys.argv[4]
 
-tgt_swp_prop = float(sys.argv[5])
+tgt_swp_prop = 0.5
+tgt_size_prop = float(sys.argv[5])
 
 tot_epoch = int(sys.argv[6])
 batch_size = int(sys.argv[7])
@@ -38,6 +39,13 @@ with np.load(f"{tgt_neu}_splitIdx.npz") as splitIdx:
 with np.load(f"{tgt_swp}_splitIdx.npz") as splitIdx:
     tgt_swp_idx = splitIdx["TRAIN"]
     val_swp_idx = splitIdx["VAL"]
+
+if tgt_size_prop < 1.0:
+    tgt_swp_idx = np.random.choice(tgt_swp_idx, int(len(tgt_swp_idx)*tgt_size_prop), replace=False)
+    tgt_neu_idx = np.random.choice(tgt_neu_idx, int(len(tgt_neu_idx)*tgt_size_prop), replace=False)
+
+print(f"src size: {len(src_neu_idx)}, {len(src_swp_idx)}", flush=True)
+print(f"tgt size: {len(tgt_neu_idx)}, {len(tgt_swp_idx)}", flush=True)
 
 DataGen = XYseq(f"{src_neu}_fea.npy", src_neu_idx,
                 f"{src_swp}_fea.npy", src_swp_idx,
